@@ -1,0 +1,48 @@
+<html>
+  <head>
+    <script src="https://unpkg.com/alpinejs" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css">
+  </head>
+  <body>
+
+      <div x-data="loadData" x-init="loadDeviceData" class="container">
+        <template x-for="device in deviceData" :key="device.DeviceName">
+          <article>
+            <header>Wireguard Device Info</header>
+            Device Name: <kbd x-text="device.DeviceName"></kbd><br>
+            <template x-for="peer in device.PeerInfo">
+              <div>
+                Peer Endpoint IP: <kbd x-text="peer.Endpoint.IP"></kbd><br>
+                Last Handshake: <kbd x-text="peer.LastHandshake"</kbd>
+              </div>
+            </template>
+          </article>
+      </div>
+        </template>
+        <span>Built with love in Mannheim, </span>
+        <span x-text="new Date().getFullYear()"></span>
+        </div>
+
+  </body>
+  <script>
+    function loadData() {
+          return {
+                deviceData: null,
+                loadDeviceData() {
+                      axios.get('http://localhost:3001/info').then((r) => {
+                            console.log(r.data);
+                            this.deviceData = r.data
+                          }).catch((e) => {
+                                console.log(e)
+                              })
+                    },
+                init() {
+                      console.log('mounted :)');
+                      setInterval(this.loadDeviceData, 10000);
+                    }
+              }
+        }
+  </script>
+</html>
+
