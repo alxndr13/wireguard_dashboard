@@ -30,7 +30,7 @@
           return {
                 deviceData: null,
                 loadDeviceData() {
-                      axios.get('http://localhost:3001/info').then((r) => {
+                      axios.get('http://{{ .appUrl }}:{{ .appPort }}/info').then((r) => {
                             console.log(r.data);
                             this.deviceData = r.data
                           }).catch((e) => {
