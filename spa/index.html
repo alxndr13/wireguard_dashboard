@@ -10,11 +10,12 @@
         <template x-for="device in deviceData" :key="device.DeviceName">
           <article>
             <header>Wireguard Device Info</header>
-            Device Name: <kbd x-text="device.DeviceName"></kbd><br>
+            <div>Device Name: <kbd x-text="device.DeviceName"></kbd>
+            </div><br>
             <template x-for="peer in device.PeerInfo">
               <div>
                 Peer Endpoint IP: <kbd x-text="peer.Endpoint.IP"></kbd><br>
-                Last Handshake: <kbd x-text="peer.LastHandshake"</kbd>
+                Last Handshake: <kbd x-text="peer.LastHandshake"></kbd>
               </div>
             </template>
           </article>
@@ -30,7 +31,7 @@
           return {
                 deviceData: null,
                 loadDeviceData() {
-                      axios.get('http://{{ .appUrl }}:{{ .appPort }}/info').then((r) => {
+                      axios.get('{{ .AppUrl }}:{{ .AppPort }}/info').then((r) => {
                             console.log(r.data);
                             this.deviceData = r.data
                           }).catch((e) => {
