@@ -2,13 +2,16 @@ package main
 
 import (
 	"embed"
+	"html/template"
 	"io/fs"
 	"net"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"golang.zx2c4.com/wireguard/wgctrl"
 )
@@ -29,9 +32,26 @@ type deviceInfo struct {
   PeerInfo []peerInfo
 }
 
+type appConfig struct {
+  AppUrl string
+  AppPort int
+}
+
+var ac appConfig
+
 func init() {
-  logger, _ = zap.NewProduction()
+  logger, _ = zap.NewDevelopment()
   defer logger.Sync() // flushes buffer, if any
+
+  // app configuration
+  viper.SetDefault("APP_URL", "http://localhost")
+  viper.SetDefault("APP_PORT", 3001)
+  viper.SetEnvPrefix("WG")
+  viper.AutomaticEnv()
+
+  ac.AppUrl = viper.GetString("APP_URL")
+  ac.AppPort = viper.GetInt("APP_PORT")
+  logger.Sugar().Debugf("App will be available under: %s:%d", ac.AppUrl, ac.AppPort)
 }
 
 func main() {
@@ -43,17 +63,48 @@ func main() {
 
   r := gin.Default()
   r.Use(cors.Default())
-  r.GET("/", indexHandler)
-
   // Returning the filesystem containing all the html files
   sub, err := fs.Sub(spaFiles, "spa")
   if err != nil {
-    logger.Fatal("Error during loading of html templates")
+    logger.Fatal("Error during initial load of html templates")
   }
-  // delivering the fs under /dashboard
+  t, err := loadTemplates(sub)
+  if err != nil {
+    logger.Sugar().Fatal(err)
+  }
+  r.SetHTMLTemplate(t)
+
+  r.GET("/", indexHandler)
   r.GET("/dashboard", dashboardHandler)
   r.GET("/info", wireguardHandler)
   r.Run(":3001")
+}
+
+func loadTemplates(f fs.FS) (*template.Template, error) {
+  logger.Debug("Loading Templates")
+  t := template.New("")
+  fs.WalkDir(f, ".", func(path string, d fs.DirEntry, err error) error {
+    if err != nil {
+      logger.Sugar().Fatal(err)
+    }
+    // Check if its an html file, if nope skip
+    if !strings.HasSuffix(path, ".html") {
+			return nil
+		}
+    // Read that file
+    h, err := fs.ReadFile(f, path)
+		if err != nil {
+      logger.Sugar().Fatal(err)
+		}
+    // Generate a new template from it
+		t, err = t.New(path).Parse(string(h))
+		if err != nil {
+      logger.Sugar().Fatal(err)
+		}
+    return nil
+  })
+
+  return t, nil
 }
 
 func indexHandler(c *gin.Context) {
@@ -92,5 +143,5 @@ func wireguardHandler(c *gin.Context) {
 }
 
 func dashboardHandler(c *gin.Context) {
-  c.HTML(200, "index.html")
+  c.HTML(200, "index.html", ac)
 }
