@@ -33,8 +33,8 @@ type deviceInfo struct {
 }
 
 type appConfig struct {
-  AppUrl string
-  AppPort int
+  BindAddress string
+  ExternalUrl string
 }
 
 var ac appConfig
@@ -44,14 +44,14 @@ func init() {
   defer logger.Sync() // flushes buffer, if any
 
   // app configuration
-  viper.SetDefault("APP_URL", "http://localhost")
-  viper.SetDefault("APP_PORT", 3001)
+  viper.SetDefault("BIND_ADDRESS", "localhost:3001")
+  viper.SetDefault("EXTERNAL_URL", "http://localhost:3001")
   viper.SetEnvPrefix("WG")
   viper.AutomaticEnv()
 
-  ac.AppUrl = viper.GetString("APP_URL")
-  ac.AppPort = viper.GetInt("APP_PORT")
-  logger.Sugar().Debugf("App will be available under: %s:%d", ac.AppUrl, ac.AppPort)
+  ac.BindAddress = viper.GetString("BIND_ADDRESS")
+  ac.ExternalUrl = viper.GetString("EXTERNAL_URL")
+  logger.Sugar().Infof("App will be available under: %s", ac.BindAddress)
 }
 
 func main() {
@@ -77,7 +77,7 @@ func main() {
   r.GET("/", indexHandler)
   r.GET("/dashboard", dashboardHandler)
   r.GET("/info", wireguardHandler)
-  r.Run(":3001")
+  r.Run(ac.BindAddress)
 }
 
 func loadTemplates(f fs.FS) (*template.Template, error) {

@@ -13,8 +13,8 @@ Provides a frontend, written in alpine.js (thanks for the help [@andaryjo](https
 ## Environment Variables
 
 ```bash
-WG_APP_URL="http://localhost"
-WG_APP_PORT=3001
+WG_EXTERNAL_URL="http://localhost:3001"
+WG_BIND_ADDRESS="localhost:3001"
 ```
 
 ## Development Setup
@@ -24,7 +24,7 @@ I'm using [air](https://github.com/cosmtrek/air) for the automatic reload upon c
 To start the app:
 
 ```bash
-air
+sudo air
 ```
 
-The app is then available at `*:3001`.
+The app is then available at `localhost:3001`. (when using defaults)
